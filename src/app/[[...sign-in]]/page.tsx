@@ -37,10 +37,10 @@ const LoginPage = () => {
               height={30}
               className="mb-2"
             />
-            <h1 className="text-2xl font-bold text-white">
+            <h1 className="text-2xl font-bold text-white justify-center text-center">
               Institute Management System
             </h1>
-            <p className="text-gray-400 text-sm">
+            <p className="text-gray-400 text-sm mt-2">
               Sign in to access your dashboard
             </p>
           </div>
@@ -82,8 +82,10 @@ const LoginPage = () => {
 
           {/* Footer */}
           <p className="text-center text-xs text-gray-500 mt-2">
-            © {new Date().getFullYear()} Institute Management System
+            © {new Date().getFullYear()} Powerd by Metagenious Technologies 
           </p>
+          
+          
         </SignIn.Step>
       </SignIn.Root>
     </div>
