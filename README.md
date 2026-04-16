@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 # imsgitt
 Institute Management System Git
 =======
@@ -29,3 +30,7 @@ To learn more about Next.js, take a look at the following resources:
 - [Lama Dev Youtube Channel](https://youtube.com/lamadev) 
 - [Next.js](https://nextjs.org/learn)
 >>>>>>> 1415082 (Initial 505 commit)
+=======
+# IMS-Nextjs-Metagenious
+Institute Management System Nextjs
+>>>>>>> 79062e6f0a1355f832670f2ae30a317a7c29e2cb
