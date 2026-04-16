@@ -31,3 +31,5 @@ export const config = {
     "/(api|trpc)(.*)",
   ],
 };
+
+export const publicRoutes = ["/", "/home", "/sign-in", "/sign-up"];

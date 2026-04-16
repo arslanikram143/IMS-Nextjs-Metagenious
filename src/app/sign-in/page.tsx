@@ -1,22 +1,20 @@
 "use client";
 
 import * as Clerk from "@clerk/elements/common";
-import * as SignUp from "@clerk/elements/sign-up";
+import * as SignIn from "@clerk/elements/sign-in";
 import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-const SignUpPage = () => {
+const LoginPage = () => {
   const { isLoaded, isSignedIn, user } = useUser();
   const router = useRouter();
 
   useEffect(() => {
-    if (isSignedIn && user) {
-      const role = user?.publicMetadata.role;
-      if (role) router.push(`/${role}`);
-    }
-  }, [isSignedIn, user, router]);
+    const role = user?.publicMetadata.role;
+    if (role) router.push(`/${role}`);
+  }, [user, router]);
 
   return (
     <div className="h-screen w-full flex items-center justify-center bg-gradient-to-br from-gray-900 via-black to-gray-800 relative overflow-hidden">
@@ -24,9 +22,9 @@ const SignUpPage = () => {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.2),transparent_60%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(16,185,129,0.2),transparent_60%)]" />
 
-      {/* Sign-up card */}
-      <SignUp.Root>
-        <SignUp.Step
+      {/* Sign-in card */}
+      <SignIn.Root>
+        <SignIn.Step
           name="start"
           className="relative z-10 backdrop-blur-xl bg-white/10 border border-white/20 p-10 rounded-2xl shadow-2xl w-[360px] flex flex-col gap-4 text-white"
         >
@@ -40,36 +38,24 @@ const SignUpPage = () => {
               className="mb-2"
             />
             <h1 className="text-2xl font-bold text-white justify-center text-center">
-              Create Account
+              Institute Management System
             </h1>
             <p className="text-gray-400 text-sm mt-2">
-              Join our school management system
+              Sign in to access your dashboard
             </p>
           </div>
 
           {/* Clerk errors */}
           <Clerk.GlobalError className="text-sm text-red-400 text-center" />
 
-          {/* Email */}
-          <Clerk.Field name="emailAddress" className="flex flex-col gap-2">
-            <Clerk.Label className="text-xs text-gray-400">Email</Clerk.Label>
-            <Clerk.Input
-              type="email"
-              required
-              className="p-2 rounded-md bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 outline-none"
-              placeholder="Enter your email"
-            />
-            <Clerk.FieldError className="text-xs text-red-400" />
-          </Clerk.Field>
-
           {/* Username */}
-          <Clerk.Field name="username" className="flex flex-col gap-2">
+          <Clerk.Field name="identifier" className="flex flex-col gap-2">
             <Clerk.Label className="text-xs text-gray-400">Username</Clerk.Label>
             <Clerk.Input
               type="text"
               required
               className="p-2 rounded-md bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 outline-none"
-              placeholder="Choose a username"
+              placeholder="Enter your username"
             />
             <Clerk.FieldError className="text-xs text-red-400" />
           </Clerk.Field>
@@ -87,12 +73,12 @@ const SignUpPage = () => {
           </Clerk.Field>
 
           {/* Submit */}
-          <SignUp.Action
+          <SignIn.Action
             submit
             className="bg-gradient-to-r from-blue-500 to-cyan-400 hover:from-blue-600 hover:to-cyan-500 text-white font-semibold my-2 rounded-md text-sm py-2 transition-all duration-200"
           >
-            Create Account
-          </SignUp.Action>
+            Sign In
+          </SignIn.Action>
 
           {/* Footer */}
           <p className="text-center text-xs text-gray-500 mt-2">
@@ -100,10 +86,10 @@ const SignUpPage = () => {
           </p>
           
           
-        </SignUp.Step>
-      </SignUp.Root>
+        </SignIn.Step>
+      </SignIn.Root>
     </div>
   );
 };
 
-export default SignUpPage;
+export default LoginPage;
