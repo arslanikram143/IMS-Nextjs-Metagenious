@@ -23,14 +23,3 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Lama Dev Youtube Channel](https://youtube.com/lamadev) 
-- [Next.js](https://nextjs.org/learn)
->>>>>>> 1415082 (Initial 505 commit)
-=======
-# IMS-Nextjs-Metagenious
-Institute Management System Nextjs
->>>>>>> 79062e6f0a1355f832670f2ae30a317a7c29e2cb
