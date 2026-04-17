@@ -1,0 +1,644 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ====================
+// Institution & Campus
+// ====================
+
+model Institution {
+  id          String    @id @default(cuid())
+  name        String
+  type        InstitutionType
+  logoUrl     String?
+  address     String
+  phone       String?
+  email       String?
+  website     String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  campuses Campus[]
+}
+
+model Campus {
+  id            String    @id @default(cuid())
+  name          String
+  code          String    @unique
+  city          String
+  address       String
+  phone         String?
+  email         String?
+  principalId   String?
+  principal     User?     @relation("CampusPrincipal", fields: [principalId], references: [id])
+  institutionId String
+  institution   Institution @relation(fields: [institutionId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relationships
+  academicYears AcademicYear[]
+  departments   Department[]
+  classes       Class[]
+  subjects      Subject[]
+  users         User[]
+  students      Student[]
+  staff         Staff[]
+  feeStructures FeeStructure[]
+  invoices      Invoice[]
+  events        Event[]
+  announcements Announcement[]
+
+  @@unique([institutionId, code])
+}
+
+enum InstitutionType {
+  SCHOOL
+  COLLEGE
+  ACADEMY
+  UNIVERSITY
+}
+
+// ====================
+// Academic Structure
+// ====================
+
+model AcademicYear {
+  id        String    @id @default(cuid())
+  name      String
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean   @default(false)
+  campusId  String
+  campus    Campus    @relation(fields: [campusId], references: [id])
+  
+  terms     Term[]
+  enrollments Enrollment[]
+
+  @@unique([campusId, name])
+}
+
+model Term {
+  id             String    @id @default(cuid())
+  name           String
+  startDate      DateTime
+  endDate        DateTime
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
+
+  @@unique([academicYearId, name])
+}
+
+model Department {
+  id        String    @id @default(cuid())
+  name      String
+  campusId  String
+  campus    Campus    @relation(fields: [campusId], references: [id])
+  headStaffId String?
+  headStaff Staff?    @relation(fields: [headStaffId], references: [id])
+
+  classes   Class[]
+  subjects  Subject[]
+  staff     Staff[]
+
+  @@unique([campusId, name])
+}
+
+// ====================
+// User Management
+// ====================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String
+  roleId        String
+  role          Role      @relation(fields: [roleId], references: [id])
+  campusId      String
+  campus        Campus    @relation(fields: [campusId], references: [id])
+  isActive      Boolean   @default(true)
+  lastLogin     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Profile relationships
+  studentProfile Student?
+  staffProfile   Staff?
+  parentProfile  Parent?
+
+  // Authentication
+  sessions      UserSession[]
+  auditLogs     AuditLog[]
+
+  @@index([campusId])
+  @@index([roleId])
+}
+
+model Role {
+  id            String    @id @default(cuid())
+  name          String    @unique
+  description   String?
+  isSystemRole  Boolean   @default(false)
+  campusId      String?
+  campus        Campus?   @relation(fields: [campusId], references: [id])
+
+  users         User[]
+  permissions   RolePermission[]
+
+  @@index([campusId])
+}
+
+model Permission {
+  id          String    @id @default(cuid())
+  module      String
+  action      PermissionAction
+  description String?
+
+  rolePermissions RolePermission[]
+
+  @@unique([module, action])
+}
+
+model RolePermission {
+  id           String    @id @default(cuid())
+  roleId       String
+  role         Role      @relation(fields: [roleId], references: [id])
+  permissionId String
+  permission   Permission @relation(fields: [permissionId], references: [id])
+
+  @@unique([roleId, permissionId])
+}
+
+enum PermissionAction {
+  VIEW
+  CREATE
+  EDIT
+  DELETE
+  MANAGE
+}
+
+model UserSession {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id])
+  refreshToken String    @unique
+  expiresAt    DateTime
+  deviceInfo   String?
+  ipAddress    String?
+  createdAt    DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model AuditLog {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  campusId   String
+  campus     Campus    @relation(fields: [campusId], references: [id])
+  action     String
+  entityType String
+  entityId   String?
+  payload    Json?
+  ipAddress  String?
+  timestamp  DateTime  @default(now())
+
+  @@index([userId])
+  @@index([campusId])
+  @@index([entityType, entityId])
+  @@index([timestamp])
+}
+
+// ====================
+// Student Management
+// ====================
+
+model Student {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id])
+  rollNo        String
+  admissionNo   String    @unique
+  firstName     String
+  lastName      String
+  dateOfBirth   DateTime
+  gender        Gender
+  bloodGroup    String?
+  medicalNotes  String?
+  address       String?
+  phone         String?
+  emergencyContactName  String?
+  emergencyContactPhone String?
+  campusId      String
+  campus        Campus    @relation(fields: [campusId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Academic
+  enrollments   Enrollment[]
+  attendances   Attendance[]
+  results       Result[]
+  submissions   Submission[]
+  quizAttempts  QuizAttempt[]
+  documents     StudentDocument[]
+
+  // Relationships
+  parents       ParentStudent[]
+
+  @@index([campusId])
+  @@index([rollNo])
+  @@index([admissionNo])
+}
+
+model Enrollment {
+  id              String    @id @default(cuid())
+  studentId       String
+  student         Student   @relation(fields: [studentId], references: [id])
+  sectionId       String
+  section         Section   @relation(fields: [sectionId], references: [id])
+  academicYearId  String
+  academicYear    AcademicYear @relation(fields: [academicYearId], references: [id])
+  status          EnrollmentStatus @default(ACTIVE)
+  enrolledAt      DateTime  @default(now())
+
+  @@unique([studentId, academicYearId])
+  @@index([studentId])
+  @@index([sectionId])
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  TRANSFERRED
+  GRADUATED
+  WITHDRAWN
+  SUSPENDED
+}
+
+model StudentDocument {
+  id          String    @id @default(cuid())
+  studentId   String
+  student     Student   @relation(fields: [studentId], references: [id])
+  type        DocumentType
+  fileUrl     String
+  fileName    String
+  uploadedAt  DateTime  @default(now())
+
+  @@index([studentId])
+}
+
+enum DocumentType {
+  BIRTH_CERTIFICATE
+  CNIC
+  PASSPORT
+  PHOTO
+  MEDICAL
+  ACADEMIC
+  OTHER
+}
+
+// ====================
+// Parent Management
+// ====================
+
+model Parent {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id])
+  firstName     String
+  lastName      String
+  phone         String    @unique
+  email         String?   @unique
+  occupation    String?
+  address       String?
+  campusId      String
+  campus        Campus    @relation(fields: [campusId], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  studentRelations ParentStudent[]
+
+  @@index([campusId])
+}
+
+model ParentStudent {
+  id          String    @id @default(cuid())
+  parentId    String
+  parent      Parent    @relation(fields: [parentId], references: [id])
+  studentId   String
+  student     Student   @relation(fields: [studentId], references: [id])
+  relation    RelationType
+  isPrimary   Boolean   @default(false)
+
+  @@unique([parentId, studentId])
+  @@index([parentId])
+  @@index([studentId])
+}
+
+enum RelationType {
+  FATHER
+  MOTHER
+  GUARDIAN
+  SIBLING
+  OTHER
+}
+
+// ====================
+// Staff Management
+// ====================
+
+model Staff {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id])
+  employeeId    String    @unique
+  firstName     String
+  lastName      String
+  dateOfBirth   DateTime?
+  gender        Gender
+  designation   String
+  departmentId  String?
+  department    Department? @relation(fields: [departmentId], references: [id])
+  qualifications Json?     // JSON array of qualifications
+  experience    Json?      // JSON array of work experience
+  joiningDate   DateTime
+  salary        Decimal?   @db.Decimal(10, 2)
+  campusId      String
+  campus        Campus    @relation(fields: [campusId], references: [id])
+  isTeacher     Boolean   @default(false)
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Teacher-specific
+  teacherProfile TeacherProfile?
+
+  // Relationships
+  leaves        Leave[]
+  salaryPayments SalaryPayment[]
+
+  @@index([campusId])
+  @@index([employeeId])
+  @@index([departmentId])
+}
+
+model TeacherProfile {
+  id          String    @id @default(cuid())
+  staffId     String    @unique
+  staff       Staff     @relation(fields: [staffId], references: [id])
+  subjects    Json?     // JSON array of subject IDs
+  classes     Json?     // JSON array of class IDs
+  bio         String?
+  specialization String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  lessons     Lesson[]
+  exams       Exam[]
+  assignments Assignment[]
+}
+
+// ====================
+// Academic Structure
+// ====================
+
+model Class {
+  id            String    @id @default(cuid())
+  name          String
+  gradeLevel    Int
+  capacity      Int
+  departmentId  String?
+  department    Department? @relation(fields: [departmentId], references: [id])
+  campusId      String
+  campus        Campus    @relation(fields: [campusId], references: [id])
+  classTeacherId String?
+  classTeacher  Staff?    @relation(fields: [classTeacherId], references: [id])
+  room          String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sections      Section[]
+  students      Student[]
+  subjects      ClassSubject[]
+  timetableSlots TimetableSlot[]
+
+  @@unique([campusId, name, gradeLevel])
+  @@index([campusId])
+  @@index([departmentId])
+}
+
+model Section {
+  id            String    @id @default(cuid())
+  name          String
+  classId       String
+  class         Class     @relation(fields: [classId], references: [id])
+  classTeacherId String?
+  classTeacher  Staff?    @relation(fields: [classTeacherId], references: [id])
+  room          String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  enrollments   Enrollment[]
+  timetableSlots TimetableSlot[]
+
+  @@unique([classId, name])
+}
+
+model Subject {
+  id          String    @id @default(cuid())
+  name        String
+  code        String
+  description String?
+  creditHours Int?      @default(1)
+  departmentId String?
+  department  Department? @relation(fields: [departmentId], references: [id])
+  campusId    String
+  campus      Campus    @relation(fields: [campusId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  classes     ClassSubject[]
+  lessons     Lesson[]
+  exams       Exam[]
+  assignments Assignment[]
+
+  @@unique([campusId, code])
+  @@index([campusId])
+  @@index([departmentId])
+}
+
+model ClassSubject {
+  id        String    @id @default(cuid())
+  classId   String
+  class     Class     @relation(fields: [classId], references: [id])
+  subjectId String
+  subject   Subject   @relation(fields: [subjectId], references: [id])
+  teacherId String?
+  teacher   Staff?    @relation(fields: [teacherId], references: [id])
+
+  @@unique([classId, subjectId])
+}
+
+// ====================
+// LMS / e-Learning
+// ====================
+
+model Course {
+  id              String    @id @default(cuid())
+  title           String
+  description     String?
+  sectionId       String
+  section         Section   @relation(fields: [sectionId], references: [id])
+  subjectId       String
+  subject         Subject   @relation(fields: [subjectId], references: [id])
+  teacherId       String
+  teacher         Staff     @relation(fields: [teacherId], references: [id])
+  academicYearId  String
+  academicYear    AcademicYear @relation(fields: [academicYearId], references: [id])
+  isPublished     Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  lessons         Lesson[]
+  assignments     Assignment[]
+  quizzes         Quiz[]
+
+  @@index([sectionId])
+  @@index([teacherId])
+  @@index([academicYearId])
+}
+
+model Lesson {
+  id          String    @id @default(cuid())
+  courseId    String
+  course      Course    @relation(fields: [courseId], references: [id])
+  title       String
+  description String?
+  type        LessonType
+  contentUrl  String?
+  order       Int
+  durationMin Int?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([courseId])
+}
+
+enum LessonType {
+  VIDEO
+  PDF
+  SLIDE
+  TEXT
+  LINK
+  QUIZ
+}
+
+model Assignment {
+  id          String    @id @default(cuid())
+  courseId    String
+  course      Course    @relation(fields: [courseId], references: [id])
+  title       String
+  instructions String?
+  dueDate     DateTime
+  totalMarks  Int
+  rubric      Json?     // JSON rubric structure
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  submissions Submission[]
+
+  @@index([courseId])
+}
+
+model Submission {
+  id            String    @id @default(cuid())
+  assignmentId  String
+  assignment    Assignment @relation(fields: [assignmentId], references: [id])
+  studentId     String
+  student       Student   @relation(fields: [studentId], references: [id])
+  fileUrl       String?
+  textContent   String?
+  submittedAt   DateTime  @default(now())
+  marks         Int?
+  feedback      String?
+  aiScore       Int?
+  aiFeedback    String?
+  status        SubmissionStatus @default(SUBMITTED)
+
+  @@unique([assignmentId, studentId])
+  @@index([assignmentId])
+  @@index([studentId])
+}
+
+enum SubmissionStatus {
+  SUBMITTED
+  GRADED
+  LATE
+  MISSING
+}
+
+model Quiz {
+  id          String    @id @default(cuid())
+  courseId    String
+  course      Course    @relation(fields: [courseId], references: [id])
+  title       String
+  description String?
+  timeLimitMin Int?
+  totalMarks  Int
+  isPublished Boolean   @default(false)
+  aiGenerated Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  questions   Question[]
+  attempts    QuizAttempt[]
+
+  @@index([courseId])
+}
+
+model Question {
+  id          String    @id @default(cuid())
+  quizId      String
+  quiz        Quiz      @relation(fields: [quizId], references: [id])
+  text        String
+  type        QuestionType
+  options     Json?     // JSON array for MCQ
+  correctAnswer String?
+  marks       Int       @default(1)
+  difficulty  Difficulty @default(MEDIUM)
+  order       Int
+
+  @@index([quizId])
+}
+
+enum QuestionType {
+  MCQ
+  TRUE_FALSE
+  SHORT_ANSWER
+  ESSAY
+  MATCHING
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+model QuizAttempt {
+  id          String    @id @default(cuid())
+  quizId      String
+  quiz        Quiz      @relation(fields: [quizId], references: [id])
+  studentId   String
+  student     Student   @relation(fields: [studentId], references: [id])
+  answers     Json      // JSON array of answers
+  score       Int?
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  status      AttemptStatus @default(IN_PROGRESS)
+
+  @@unique
